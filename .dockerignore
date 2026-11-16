@@ -1,5 +1,6 @@
 .env
-.git
-.venv
-.data
-__pycache__
+.venv/
+.git/
+.data/
+__pycache__/
+evaluation/browser-artifacts/

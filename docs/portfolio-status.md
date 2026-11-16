@@ -1,8 +1,7 @@
 # Portfolio progress
 
-Scope: the 39 entries in the previously delivered eight-course architecture guide.
+- Project 01 / Core K1: source-backed brochure generator, default finance branch.
+- Project 02 / Core K2 adaptation: showroom assistant, project-02-car-showroom branch. This repository branch is a standalone app, not an extension loaded into the brochure server.
+- Other 37 architecture-guide entries: planned, not implemented here.
 
-- K1 company brochure generator: this local implementation is complete at portfolio-MVP scope; see evaluation/results.md for verification. Repository destination: pra986/source-backed-brochures. Live-provider testing and cloud deployment are pending.
-- Other 38 entries: planned, not implemented by this repository. The architecture and execution-plan PDFs are study plans, not completed code.
-
-Next intended build: K2 showroom support assistant, reusing the user's car-showroom domain with synthetic inventory and validated tools. Each later system needs its own implementation and verification; no completion is claimed in advance.
+The original scope has 39 studies including supplements and historical material; it does not imply 39 completed production applications. Only actual completed code and observed checks may be claimed.

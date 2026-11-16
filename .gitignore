@@ -1,8 +1,9 @@
 .env
 .venv/
+.data/
 __pycache__/
 *.pyc
 *.egg-info/
 build/
 dist/
-.data/
+evaluation/browser-artifacts/

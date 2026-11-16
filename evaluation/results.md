@@ -1,22 +1,18 @@
-# Observed verification - 16 November 2026
+# Verification record - 16 November 2026
 
-## Executed
+## Observed locally
 
-- Python 3.12, supplied workspace runtime dependencies.
-- `python3 -m unittest discover -s tests -v`: **30 tests passed**, 0 failures.
-- Parser and same-origin link extraction; unsupported input, credential/port and private/mixed DNS rejection.
-- Mock transport verifies pinned TCP destination, preserved TLS hostname, redirect revalidation, redirect cap, HTML type and body-byte limits.
-- Offline demo, partial-page failure, no-evidence failure, cache refresh and isolation of synthetic/live cache namespaces.
-- SQLite persistence across Store instances and immutability of saved snapshots.
-- Known/unknown/malformed AI evidence selection; mocked provider response and provider failure handling.
-- FastAPI in-process request, history, replay, Markdown and JSON export, missing run, invalid export format, missing AI configuration, UI document and health routes.
-- JavaScript syntax: `node --check` passed.
-- Python wheel built and installed in a separate virtual environment using the supplied system dependencies (no independent network dependency resolution). Installed package was exercised from outside the source directory.
+- Python 3.12: 60 unittest checks passed, 0 failures.
+- Inventory filters, exact comparisons, missing/unsupported facts and parameterized query behavior.
+- Account/password/session handling, logout/expiry, cookie flags, login throttling, owner isolation and origin/host/content-type checks.
+- Booking preview without stock reservation; explicit confirmation; stale price/version and expiry rejection.
+- Duplicate confirmation/cancellation; persistence across store reopen; simultaneous confirmations of one preview and a race for the final unit.
+- Full in-process HTTP registration, preview, confirmation, history and cancellation.
+- Offline lakh/crore/range queries; typed mocked AI routing and rejection of write plans.
+- Browser JavaScript syntax checked with Node.
 
-## Not established
+## CI and live checks
 
-The browser automation package could not launch a usable Chromium process in this execution environment: the system binary failed at its process-singleton socket initialization. Therefore browser interactions, responsive layout, screenshot QA and visual output are **not verified**. The attempted browser flow is not counted among passing checks.
+The workflow includes a Python 3.11/3.12/3.13 matrix and a real Chromium smoke job. Their actual outcome is recorded after execution, not assumed from configuration. The browser smoke uses a disposable database and synthetic identity, tests desktop and narrow-screen behavior, and retains screenshots as CI artifacts.
 
-No paid key was supplied, so live hosted AI inference is not tested. Public-site compatibility has not been benchmarked. Docker image, GitHub Actions matrix and cloud deployment have not been run. There are no quality, latency, cost or real-user metrics to claim.
-
-The current runtime emits a Starlette/httpx integration deprecation warning during TestClient setup; tests still pass. A clean dependency-resolution run on a normal machine and the CI matrix should be completed before a public release.
+No paid provider key was used. Hosted AI routing quality, browser speech-synthesis behavior, Docker image, MySQL compatibility and production deployment have not been established. A local runtime emits a Starlette/httpx deprecation warning during TestClient setup; deterministic tests still pass. No real user, real price accuracy, latency or cost metrics are claimed.

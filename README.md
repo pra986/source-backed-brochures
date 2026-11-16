@@ -1,49 +1,73 @@
-# Source-backed Brochures
+# Showroom Copilot - Project 02
 
-A local company-brochure portfolio application that keeps its evidence. Enter a company website, collect up to four HTML pages and export a brochure with source links and replayable snapshots. A fictional demo works without an API key or internet.
+An AI-assisted, course-inspired car showroom application with inventory-grounded answers, exact car comparisons and explicitly confirmed **synthetic booking requests**. It adapts the airline tool-calling exercise to Pranil Deshmukh's showroom domain.
 
-**Status:** implemented local portfolio MVP, with automated verification. Not a hosted service. Built with AI assistance for Pranil Deshmukh. Inspired by Ed Donner's LLM Engineering brochure exercise; this repository is an independent implementation, not a fork or claim of sole unaided authorship.
+**All brands, models, prices and stock are fictional. There are no real vehicle reservations, payments or sales.** This is a local portfolio demo, not a production dealership service.
 
-## Features
+## What is implemented
 
-- Responsive web interface, saved history and printable results.
-- Bounded HTML crawling, same-origin links and child-page redirects.
-- Public-address validation with pinned TCP peers (preserving TLS hostname checks), a page-byte cap and socket timeouts.
-- Extractive brochures: displayed passages come directly from collected pages.
-- Optional OpenAI-compatible model **selects evidence IDs only**. Invalid IDs fail closed; generated free-form claims are not used.
-- One-hour SQLite page cache, refresh control, immutable per-run text snapshots, fetch timestamps and hashes of decoded HTML.
-- Markdown and full JSON snapshot exports; a built-in fictional demo.
+- Responsive browser interface with filter controls, inventory cards, comparisons and tool-call inspection.
+- Twelve fictional cars with integer-INR prices, fuel, transmission, body type, seat count, demo stock and inventory version.
+- No-key offline query routing for simple budgets (including lakh/crore), brand, fuel, body type and transmission.
+- Optional hosted AI routing: the model returns a validated, read-only tool plan; all displayed inventory comes from the database. No model-generated prices are used.
+- Account registration/sign-in using salted scrypt hashes, opaque server-side sessions and HttpOnly/SameSite cookies.
+- Ten-minute booking previews, explicit confirmation, transactional stock/price/version checks, replay-safe confirmation and cancellation.
+- User-scoped booking history with the original car/price snapshot.
+- SQLite persistence, automated unit/API/concurrency checks, browser-smoke CI and interview documentation.
+- Optional browser text-to-speech for the answer. This is not a hosted voice-agent integration.
 
-## Quick start (Python 3.11+)
+## Get this project
+
+Project 1 remains on the repository's default `finance` branch. Project 2 is an independent application at the root of `project-02-car-showroom`:
+
+```sh
+git clone --branch project-02-car-showroom --single-branch https://github.com/pra986/source-backed-brochures.git car-showroom-assistant
+cd car-showroom-assistant
+```
+
+A separate repository can be used later without changing the application package. The downloaded ZIP already contains this project's files; after extracting it, enter the folder with `pyproject.toml`.
+
+## Run locally - Python 3.11+
 
 ```sh
 python -m venv .venv
 ```
 
-Activate it:
+Activate on Windows PowerShell:
 
 ```powershell
-# Windows PowerShell
 .venv\Scripts\Activate.ps1
 ```
 
+Or macOS/Linux:
+
 ```sh
-# macOS / Linux
 . .venv/bin/activate
 ```
 
-Then, from the directory containing `pyproject.toml`:
+Install and start:
 
 ```sh
 python -m pip install -e .
-python -m uvicorn brochure.app:app --host 127.0.0.1 --port 8000
+python -m uvicorn showroom.app:app --host 127.0.0.1 --port 8000
 ```
 
-Open **http://127.0.0.1:8000**, keep **Use fictional demo data** checked and click **Generate brochure**. Sources, history, downloads and printing work without a provider key. The demo company and its claims are synthetic.
+Open **http://127.0.0.1:8000**. No API key is needed for offline mode. Browse cars, ask `Show automatic cars under 12 lakh`, and compare `CAR-001` with `CAR-002`. Register a test identity with a unique demo password of 10-128 characters before trying a booking request. No email is sent.
 
-## Optional AI selection
+## Booking demonstration
 
-Set server environment variables before starting; `.env.example` documents names, but the app does **not** automatically load `.env` files.
+1. Search or browse the catalog.
+2. Sign in with a local demo account.
+3. Select **Request booking** on a car.
+4. Review the preview and acknowledge that it is synthetic.
+5. Select **Confirm demo request**. The backend rechecks price, version and stock inside a transaction.
+6. Open **My requests** to inspect or cancel it.
+
+A preview does not hold stock. If inventory changes after preview, confirmation is rejected and a new preview is required. Repeating confirmation with the same preview returns the same booking; it does not decrement stock again. Replaying a cancelled booking's preview returns its cancelled record, not a new reservation.
+
+## Optional AI mode
+
+Set these environment variables in the server shell **before startup**. `.env.example` is documentation; the app does not load a `.env` file automatically.
 
 ```powershell
 $env:OPENAI_API_KEY="YOUR_LOCAL_KEY"
@@ -55,67 +79,81 @@ export OPENAI_API_KEY="YOUR_LOCAL_KEY"
 export OPENAI_MODEL="YOUR_AVAILABLE_CHAT_MODEL"
 ```
 
-Restart the server and choose AI mode. `OPENAI_BASE_URL` defaults to `https://api.openai.com/v1`; change it only to a provider you trust with the key and collected excerpts. The provider must support the chat-completions endpoint and JSON-object response mode. Model availability and cost depend on your account. Hosted inference has not been verified with a paid key in this delivery; its contract is tested with mocks.
+Choose **AI** in the routing dropdown. The provider must support an OpenAI-compatible chat-completions endpoint and JSON-object responses. `OPENAI_BASE_URL` defaults to `https://api.openai.com/v1`; only change it to a provider you trust with your key and prompt. Hosted inference availability, cost and routing quality depend on your account. No paid key was used during local verification; provider contracts use mocks.
 
-## Tests
+## Checks
 
 ```sh
 python -m unittest discover -s tests -v
 ```
 
-See [evaluation/results.md](evaluation/results.md) for actual checks and limits. Tests use temporary databases and deterministic fixtures; no keys or paid calls are required.
-
-## Docker (optional; not built in this delivery)
+Optional real-browser check (downloads a browser):
 
 ```sh
-docker build -t source-backed-brochures .
-docker run --rm -p 127.0.0.1:8000:8000 -v brochure-data:/app/.data source-backed-brochures
+python -m pip install 'playwright>=1.50,<2'
+python -m playwright install chromium
+python tests/browser_smoke.py
 ```
 
-Use `--env-file .env` only when you have populated a local `.env` and intend to enable AI mode. No key is baked into the image. Image build needs network access to install dependencies.
+The browser check starts an isolated server/database, exercises search, comparison, registration, consent, confirmation, cancellation and logout, checks narrow-screen overflow, and saves screenshots under `evaluation/browser-artifacts/`. On Linux, missing system libraries may require `python -m playwright install --with-deps chromium`.
+
+See [evaluation/results.md](evaluation/results.md) for observed verification and limits. CI is configured to run unit/API checks on Python 3.11-3.13 and a Chromium browser-smoke job.
+
+## API map
+
+| Endpoint | Behavior |
+|---|---|
+| `GET /api/cars` | Filter inventory; max/min price are inclusive integer INR |
+| `GET /api/cars/{id}` | Exact catalog record |
+| `POST /api/compare` | Compare 2-3 distinct IDs |
+| `POST /api/chat` | Read-only plan and inventory-backed result |
+| `POST /api/auth/register`, `/login`, `/logout` | Local account/session management |
+| `GET /api/auth/me` | Current identity or null |
+| `POST /api/booking-previews` | Authenticated preview; no stock hold |
+| `POST /api/bookings/confirm` | Authenticated, explicit, replay-safe confirmation |
+| `GET /api/bookings` | Current user's history only |
+| `POST /api/bookings/{id}/cancel` | Owner-only, replay-safe cancellation |
+| `GET /api/health` | Demo health and AI-configuration indicator |
 
 ## Architecture
 
 ```mermaid
 flowchart TD
-    UI[Browser form] --> API[FastAPI]
-    API --> Engine[Brochure engine]
-    Engine --> Fetch[Bounded public fetcher]
-    Engine --> DB[(SQLite cache and runs)]
-    Fetch --> Evidence[HTML parser and evidence IDs]
-    Evidence --> Selection[Extractive or optional AI selection]
-    Selection --> Validate[Validate evidence IDs]
-    Validate --> DB
-    DB --> Export[History and Markdown or JSON export]
+    UI[Browser UI] --> API[FastAPI]
+    API --> Router[Offline or optional AI router]
+    Router --> Tools[Validated read-only tools]
+    Tools --> DB[(SQLite inventory)]
+    API --> Auth[Server-side sessions]
+    Auth --> Booking[Preview and confirmation service]
+    Booking --> DB
+    Booking --> Ledger[(Booking snapshots)]
 ```
 
-Read [docs/architecture.md](docs/architecture.md) and [docs/interview-guide.md](docs/interview-guide.md).
+Read [docs/architecture.md](docs/architecture.md), [docs/data-dictionary.md](docs/data-dictionary.md), [docs/contributions.md](docs/contributions.md) and [docs/interview-guide.md](docs/interview-guide.md).
 
-## Endpoints
+## SQLite and MySQL
 
-| Endpoint | Purpose |
-|---|---|
-| `GET /` | Web interface |
-| `GET /api/health` | Health and provider configuration indicator |
-| `POST /api/generate` | Company, URL, demo, AI and refresh options |
-| `GET /api/runs` | Recent 30 run summaries |
-| `GET /api/runs/{id}` | Exact saved run |
-| `GET /api/runs/{id}/export?format=markdown` | Markdown download |
-| `GET /api/runs/{id}/export?format=json` | Source snapshot download |
+SQLite is implemented so this demo runs without an external database. **There is no MySQL adapter in this release.** [docs/mysql-migration.md](docs/mysql-migration.md) explains the required schema, driver and transactional changes, including row locks. A migration is future work, not a completed feature.
 
-## Limitations
+## Deployment limits
 
-This is a **local, single-user app**. It has no authentication, retention UI, robots.txt enforcement or public-hosting operations. Keep it bound to localhost. The two-request concurrency gate is per process, not a distributed rate limit. Set up authentication, crawl permissions, request budgets, an egress policy, data retention and operational monitoring before a shared deployment.
+Keep this demo bound to localhost. For a shared deployment, supply a trusted hostname list via `TRUSTED_HOSTS`, HTTPS, secure cookies (`COOKIE_SECURE=1`), durable backups, migrations, shared rate limiting, monitoring and an account recovery policy. No real customer data should be entered in this demo.
 
-Only static HTML is supported; JavaScript-only pages, blocked websites, PDFs and nonstandard ports are rejected or yield no evidence. Content is decoded as UTF-8 with replacement; some encodings may lose text. The extractor is deliberately simple. Captured source text is evidence of what a page said, not independent proof that the company claims are true. AI mode selects excerpts rather than writing a polished marketing narrative. Evidence can still contain misleading or malicious website text, so review before sharing. A brochure is not automatically a reliable company assessment.
+There is no admin inventory editor, payment provider, email verification, password reset, distributed rate limit, production access audit or real vehicle-stock integration. Sign-in throttling and chat concurrency limits are per process. Registration is not rate-limited. The Content-Length guard is a convenience limit, not a full streaming-body or reverse-proxy budget. SQLite writes are serialized using `BEGIN IMMEDIATE`, suitable for a small demo, not a large shared fleet service.
 
-Source texts and run history are stored unencrypted locally in `.data/`. Do not use sensitive input. Clear the data directory only after stopping the app and backing up anything you want to keep. Public-address validation is defense in depth, not a substitute for deployment-level egress restrictions.
+Offline routing intentionally handles a narrow grammar; ambiguous or unsupported facts get help rather than invented answers. It does not preserve conversation context. Budget caps are inclusive. It does not infer mileage, safety ratings, finance, discounts or real-world performance. Cookie sessions last one day. Local data is stored unencrypted in `.data/showroom.sqlite3`.
 
-## Attribution and contribution record
+## Docker (recipe; build verification is recorded separately)
 
-- Course inspiration: [Ed Donner, LLM Engineering, Week 1 Day 5](https://github.com/ed-donner/llm_engineering/blob/main/week1/day5.ipynb).
-- Reviewed inspiration snapshot: `e9d3397128f9c6177478af82fee077c7a5b11230`.
-- No course code, paid materials, branding assets or real business content are bundled.
-- Implementation was generated and verified with AI assistance in this collaboration. See [docs/contributions.md](docs/contributions.md) for the actual work and [docs/portfolio-status.md](docs/portfolio-status.md) for remaining projects.
+```sh
+docker build -t showroom-copilot .
+docker run --rm -p 127.0.0.1:8000:8000 -v showroom-data:/app/.data showroom-copilot
+```
 
-License: MIT for this independent implementation. Dependency licenses remain their owners'.
+Optional `.env` settings can be passed with Docker's `--env-file .env`. Keys are not baked into the image. Stop the server before deleting or backing up the local database.
+
+## Attribution
+
+Inspired by [Ed Donner's LLM Engineering Week 2 airline assistant](https://github.com/ed-donner/llm_engineering/blob/main/week2/day5.ipynb), reviewed at `e9d3397128f9c6177478af82fee077c7a5b11230`. This independently written implementation was produced with AI assistance for Pranil Deshmukh's portfolio. No paid course materials or real car specifications are bundled. Do not present it as unaided personal authorship or a production dealership system.
+
+License: MIT for this implementation; dependency licenses remain their owners'.
