@@ -34,6 +34,7 @@ with tempfile.TemporaryDirectory() as data:
             page.locator('#ask').click()
             page.get_by_text('Answer generated from the catalog. No booking was created.',exact=True).wait_for()
             assert page.locator('.car').count()==3
+            page.locator('details.tool summary').click()
             assert 'search' in page.locator('#trace').inner_text()
             page.screenshot(path=str(OUT/'desktop.png'),full_page=True)
             page.locator('#reset').click()
