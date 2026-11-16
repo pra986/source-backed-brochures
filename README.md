@@ -1,121 +1,90 @@
-# Source-backed Brochures
+# Meeting Minutes Studio — Project 03
 
-A local company-brochure portfolio application that keeps its evidence. Enter a company website, collect up to four HTML pages and export a brochure with source links and replayable snapshots. A fictional demo works without an API key or internet.
+An AI-assisted portfolio implementation for Pranil Deshmukh: turn meeting transcripts into source-linked discussion excerpts, explicit decisions and action items, review them, then export a saved version. Includes a fictional demo with **no API key required**.
 
-**Status:** implemented local portfolio MVP, with automated verification. Not a hosted service. Built with AI assistance for Pranil Deshmukh. Inspired by Ed Donner's LLM Engineering brochure exercise; this repository is an independent implementation, not a fork or claim of sole unaided authorship.
+Inspired by Ed Donner's meeting-minutes exercise in [LLM Engineering](https://github.com/ed-donner/llm_engineering/tree/main/week3). This repository adds its own FastAPI interface, conservative source selection, review workflow, SQLite revision history, exports and automated tests. It is a course-inspired, AI-assisted implementation, not a claim of independent course authorship.
 
-## Features
+## Run on your computer
 
-- Responsive web interface, saved history and printable results.
-- Bounded HTML crawling, same-origin links and child-page redirects.
-- Public-address validation with pinned TCP peers (preserving TLS hostname checks), a page-byte cap and socket timeouts.
-- Extractive brochures: displayed passages come directly from collected pages.
-- Optional OpenAI-compatible model **selects evidence IDs only**. Invalid IDs fail closed; generated free-form claims are not used.
-- One-hour SQLite page cache, refresh control, immutable per-run text snapshots, fetch timestamps and hashes of decoded HTML.
-- Markdown and full JSON snapshot exports; a built-in fictional demo.
+Install Python 3.11 or newer. Run these commands in a terminal:
 
-## Quick start (Python 3.11+)
-
-```sh
+```bash
+git clone --branch project-03-meeting-minutes --single-branch https://github.com/pra986/source-backed-brochures.git meeting-minutes-assistant
+cd meeting-minutes-assistant
 python -m venv .venv
 ```
 
-Activate it:
+Activate the environment on Windows:
 
 ```powershell
-# Windows PowerShell
 .venv\Scripts\Activate.ps1
 ```
 
-```sh
-# macOS / Linux
-. .venv/bin/activate
+Or on macOS/Linux:
+
+```bash
+source .venv/bin/activate
 ```
 
-Then, from the directory containing `pyproject.toml`:
+Then:
 
-```sh
+```bash
 python -m pip install -e .
-python -m uvicorn brochure.app:app --host 127.0.0.1 --port 8000
+python -m uvicorn minutes.app:app --host 127.0.0.1 --port 8000
 ```
 
-Open **http://127.0.0.1:8000**, keep **Use fictional demo data** checked and click **Generate brochure**. Sources, history, downloads and printing work without a provider key. The demo company and its claims are synthetic.
+Open **[http://127.0.0.1:8000](http://127.0.0.1:8000)**. This link works after the server starts on your computer. If another project uses port 8000, choose `--port 8003` and open `http://127.0.0.1:8003`. Stop with Ctrl+C.
 
-## Optional AI selection
+1. Click **Load fictional demo**, keep Offline mode, then **Create draft minutes**.
+2. Inspect source links; edit, exclude or add items. Blank owner/due fields mean unknown.
+3. Check the review box and click **Save review**.
+4. Download Markdown minutes, action CSV or the full JSON snapshot. Print/save PDF uses the browser print dialog.
+5. Reopen a saved meeting, inspect revisions or delete its local data.
 
-Set server environment variables before starting; `.env.example` documents names, but the app does **not** automatically load `.env` files.
+## What it does
 
-```powershell
-$env:OPENAI_API_KEY="YOUR_LOCAL_KEY"
-$env:OPENAI_MODEL="YOUR_AVAILABLE_CHAT_MODEL"
+- Parses up to 300 transcript segments, with optional speakers and `[MM:SS]` / `[HH:MM:SS]` timestamps.
+- Offline selection uses the first four segments as discussion excerpts, explicit decision phrases and explicit commitments. It does not produce an abstractive summary.
+- Optional AI selects existing source IDs; the server rejects unknown IDs, duplicate IDs, unsupported decisions and actions. Extracted text remains verbatim.
+- Every item retains its original source quote. User edits and manual additions are labeled separately.
+- Saves immutable source data, a source hash and revision snapshots in SQLite; stale writes receive HTTP 409.
+- Requires a saved reviewed version for exports. Markdown/CSV include only selected items; JSON includes the complete record, including excluded items and the original transcript.
+- Optional audio forwards one file, up to 20 MiB, to a configured transcription provider; returned text requires review. Audio is not saved by this application.
+
+## Optional hosted AI/audio
+
+Offline mode needs no configuration. For optional provider modes set environment variables **before** starting the server:
+
+```bash
+export OPENAI_API_KEY='your-key'
+export OPENAI_MODEL='your-compatible-chat-model'
+export OPENAI_TRANSCRIBE_MODEL='your-compatible-transcription-model'
 ```
 
-```sh
-export OPENAI_API_KEY="YOUR_LOCAL_KEY"
-export OPENAI_MODEL="YOUR_AVAILABLE_CHAT_MODEL"
-```
+PowerShell uses `$env:OPENAI_API_KEY='your-key'` and the same pattern for model variables. Choose models available to your provider account. `.env.example` documents settings; the app does **not** automatically load `.env` files. `OPENAI_BASE_URL` defaults to `https://api.openai.com/v1`. The server uses OpenAI-compatible chat-completions JSON output and audio-transcription endpoints. Provider compatibility and current model availability must be checked for your account.
 
-Restart the server and choose AI mode. `OPENAI_BASE_URL` defaults to `https://api.openai.com/v1`; change it only to a provider you trust with the key and collected excerpts. The provider must support the chat-completions endpoint and JSON-object response mode. Model availability and cost depend on your account. Hosted inference has not been verified with a paid key in this delivery; its contract is tested with mocks.
+Transcript content is sent externally only in AI mode; audio only when you explicitly transcribe. Provider usage may incur charges. No live paid provider calls were made for verification; provider contracts are mocked in tests. There is no local speech model, diarization, audio chunking or fabricated speaker/timestamp metadata.
 
-## Tests
+## Data and limits
 
-```sh
+This is a local, single-user portfolio demo with no authentication or account isolation. Bind to loopback. Do not deploy it publicly as a multi-user service or upload confidential recordings. All users of the same server can access its saved meetings. Transcripts and complete revision snapshots are stored unencrypted in `.data/minutes.sqlite3` (override `MINUTES_DATA_DIR`). Deleting a meeting removes its active record and history; previously downloaded exports and backups remain outside the app.
+
+Source hashes detect a changed string; they do not establish authenticity. Approval records user review, not independent factual verification. Rule-based extraction can miss paraphrases, misread negation or interpret names incorrectly. AI selection can omit important items. Relative due text such as “Friday” is never resolved to a calendar date. Human edits can introduce unsupported claims, so original quotes remain visible. Print layout is browser-controlled; downloadable Markdown/CSV/JSON are the defined export formats.
+
+## Verify
+
+```bash
 python -m unittest discover -s tests -v
+python -m pip install 'playwright>=1.50,<2'
+python -m playwright install chromium
+python tests/browser_smoke.py
 ```
 
-See [evaluation/results.md](evaluation/results.md) for actual checks and limits. Tests use temporary databases and deterministic fixtures; no keys or paid calls are required.
+CI runs unit/API tests on Python 3.11, 3.12 and 3.13 plus a Chromium workflow against a real local server. Browser screenshots and downloads are CI artifacts, not committed meeting data. See [evaluation/results.md](evaluation/results.md).
 
-## Docker (optional; not built in this delivery)
+## Understand and present it
 
-```sh
-docker build -t source-backed-brochures .
-docker run --rm -p 127.0.0.1:8000:8000 -v brochure-data:/app/.data source-backed-brochures
-```
+- [Architecture, data model and flow](docs/architecture.md)
+- [Interview walkthrough and contribution notes](docs/interview.md)
 
-Use `--env-file .env` only when you have populated a local `.env` and intend to enable AI mode. No key is baked into the image. Image build needs network access to install dependencies.
-
-## Architecture
-
-```mermaid
-flowchart TD
-    UI[Browser form] --> API[FastAPI]
-    API --> Engine[Brochure engine]
-    Engine --> Fetch[Bounded public fetcher]
-    Engine --> DB[(SQLite cache and runs)]
-    Fetch --> Evidence[HTML parser and evidence IDs]
-    Evidence --> Selection[Extractive or optional AI selection]
-    Selection --> Validate[Validate evidence IDs]
-    Validate --> DB
-    DB --> Export[History and Markdown or JSON export]
-```
-
-Read [docs/architecture.md](docs/architecture.md) and [docs/interview-guide.md](docs/interview-guide.md).
-
-## Endpoints
-
-| Endpoint | Purpose |
-|---|---|
-| `GET /` | Web interface |
-| `GET /api/health` | Health and provider configuration indicator |
-| `POST /api/generate` | Company, URL, demo, AI and refresh options |
-| `GET /api/runs` | Recent 30 run summaries |
-| `GET /api/runs/{id}` | Exact saved run |
-| `GET /api/runs/{id}/export?format=markdown` | Markdown download |
-| `GET /api/runs/{id}/export?format=json` | Source snapshot download |
-
-## Limitations
-
-This is a **local, single-user app**. It has no authentication, retention UI, robots.txt enforcement or public-hosting operations. Keep it bound to localhost. The two-request concurrency gate is per process, not a distributed rate limit. Set up authentication, crawl permissions, request budgets, an egress policy, data retention and operational monitoring before a shared deployment.
-
-Only static HTML is supported; JavaScript-only pages, blocked websites, PDFs and nonstandard ports are rejected or yield no evidence. Content is decoded as UTF-8 with replacement; some encodings may lose text. The extractor is deliberately simple. Captured source text is evidence of what a page said, not independent proof that the company claims are true. AI mode selects excerpts rather than writing a polished marketing narrative. Evidence can still contain misleading or malicious website text, so review before sharing. A brochure is not automatically a reliable company assessment.
-
-Source texts and run history are stored unencrypted locally in `.data/`. Do not use sensitive input. Clear the data directory only after stopping the app and backing up anything you want to keep. Public-address validation is defense in depth, not a substitute for deployment-level egress restrictions.
-
-## Attribution and contribution record
-
-- Course inspiration: [Ed Donner, LLM Engineering, Week 1 Day 5](https://github.com/ed-donner/llm_engineering/blob/main/week1/day5.ipynb).
-- Reviewed inspiration snapshot: `e9d3397128f9c6177478af82fee077c7a5b11230`.
-- No course code, paid materials, branding assets or real business content are bundled.
-- Implementation was generated and verified with AI assistance in this collaboration. See [docs/contributions.md](docs/contributions.md) for the actual work and [docs/portfolio-status.md](docs/portfolio-status.md) for remaining projects.
-
-License: MIT for this independent implementation. Dependency licenses remain their owners'.
+This branch is a standalone project within the existing repository. Project 01 and Project 02 remain on their own branches. Do not merge this branch's root replacement over another application by accident.
