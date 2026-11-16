@@ -1,22 +1,12 @@
-# Observed verification - 16 November 2026
+# Verification record
 
-## Executed
-
-- Python 3.12, supplied workspace runtime dependencies.
-- `python3 -m unittest discover -s tests -v`: **30 tests passed**, 0 failures.
-- Parser and same-origin link extraction; unsupported input, credential/port and private/mixed DNS rejection.
-- Mock transport verifies pinned TCP destination, preserved TLS hostname, redirect revalidation, redirect cap, HTML type and body-byte limits.
-- Offline demo, partial-page failure, no-evidence failure, cache refresh and isolation of synthetic/live cache namespaces.
-- SQLite persistence across Store instances and immutability of saved snapshots.
-- Known/unknown/malformed AI evidence selection; mocked provider response and provider failure handling.
-- FastAPI in-process request, history, replay, Markdown and JSON export, missing run, invalid export format, missing AI configuration, UI document and health routes.
+- Tested application commit: `522a72585a34ae8bf5aedede9ea109ff420d42e1`.
+- [GitHub Actions run 43838539179](https://github.com/pra986/source-backed-brochures/actions/runs/43838539179): **all four jobs passed** — 42 tests on each of Python 3.11, 3.12 and 3.13, plus real Chromium browser smoke.
+- Browser checked draft approval gate, source links, task editing, saved approval, Markdown/CSV/JSON downloads, persistence after reload, manual additions clearing approval, revision history, 390px responsive layout and confirmed deletion. No page JavaScript errors were observed.
+- Desktop and mobile screenshots were visually reviewed. Screenshots and fictional example downloads are retained in the workflow artifact subject to GitHub retention, not as committed meeting data.
+- Local Python 3.12: **42 tests passed**, including a built-package install checked outside the source directory. The local environment inherited runtime dependencies; clean dependency installation was verified separately by CI.
 - JavaScript syntax: `node --check` passed.
-- Python wheel built and installed in a separate virtual environment using the supplied system dependencies (no independent network dependency resolution). Installed package was exercised from outside the source directory.
+- Demo fixture: 9 source segments → 4 discussion excerpts, 2 decisions, 3 actions. The suggestion in S006 is not extracted as an action. This fixture is not a representative accuracy benchmark.
+- No paid/live AI or audio provider calls were made. Contract mocks do not measure transcription or meeting-summary quality.
 
-## Not established
-
-The browser automation package could not launch a usable Chromium process in this execution environment: the system binary failed at its process-singleton socket initialization. Therefore browser interactions, responsive layout, screenshot QA and visual output are **not verified**. The attempted browser flow is not counted among passing checks.
-
-No paid key was supplied, so live hosted AI inference is not tested. Public-site compatibility has not been benchmarked. Docker image, GitHub Actions matrix and cloud deployment have not been run. There are no quality, latency, cost or real-user metrics to claim.
-
-The current runtime emits a Starlette/httpx integration deprecation warning during TestClient setup; tests still pass. A clean dependency-resolution run on a normal machine and the CI matrix should be completed before a public release.
+This results update changes documentation only; the linked run records the exact tested application commit.
