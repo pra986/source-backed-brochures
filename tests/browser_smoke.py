@@ -37,7 +37,7 @@ with tempfile.TemporaryDirectory() as data:
             page.locator('details.tool summary').click()
             assert 'search' in page.locator('#trace').inner_text()
             page.screenshot(path=str(OUT/'desktop.png'),full_page=True)
-            page.locator('#reset').click()
+            page.locator('#resetFilters').click()
             page.locator('[data-car-id="CAR-001"]').wait_for()
             page.get_by_label('Select CAR-001 for comparison').check()
             page.get_by_label('Select CAR-002 for comparison').check()
